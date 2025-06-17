@@ -5,8 +5,8 @@ import os
 
 st.set_page_config(page_title="Multilingual Image Captioning", layout="centered")
 
-st.title("Multilingual Image Captioning with TTS")
-st.markdown("Generate captions for uploaded or captured images in **English or Hindi**, and hear them via text-to-speech.")
+st.title("🖼️ Multilingual Image Captioning with TTS")
+st.markdown("Generate captions in both **English and Hindi**, and listen to them via Text-to-Speech.")
 
 # --- Image input method
 input_method = st.selectbox("Choose how to provide the image", ["Upload from device", "Capture using camera"])
@@ -23,33 +23,38 @@ elif input_method == "Capture using camera":
     if captured_image:
         image = Image.open(captured_image)
 
-# --- Options
-language = st.selectbox("Select output language", ["English", "Hindi"])
-output_mode = st.radio("Select output format", ["Text", "Text + Speech"])
+# --- Toggle sections
+show_en = st.checkbox("Show English Caption + Audio", value=True)
+show_hi = st.checkbox("Show Hindi Caption + Audio", value=True)
 
-# --- Process image if available
+# --- Process if image is available
 if image:
     st.image(image, caption="Selected Image", use_column_width=True)
 
-    with st.spinner("Generating caption..."):
+    with st.spinner("Generating captions..."):
         caption_en = generate_caption(image)
-        caption = caption_en
 
-        if language == "Hindi":
-            from deep_translator import GoogleTranslator
-            caption = GoogleTranslator(source='en', target='hi').translate(caption_en)
+        from deep_translator import GoogleTranslator
+        caption_hi = GoogleTranslator(source='en', target='hi').translate(caption_en)
 
-        st.success("Caption Generated!")
+        st.success("Captions Generated!")
 
-        if output_mode in ["Text", "Text + Speech"]:
-            st.subheader("📄 Caption")
-            st.write(caption)
+        if show_en:
+            st.subheader("📄 English Caption")
+            st.write(caption_en)
 
-        if output_mode == "Text + Speech":
-            with st.spinner("Converting to speech..."):
-                audio_file = text_to_speech(caption, lang='hi' if language == 'Hindi' else 'en')
-                st.markdown(get_audio_html(audio_file), unsafe_allow_html=True)
+            with st.spinner("🔊 Generating English speech..."):
+                audio_en = text_to_speech(caption_en, lang='en')
+                st.markdown(get_audio_html(audio_en), unsafe_allow_html=True)
 
-    # Clean up
+        if show_hi:
+            st.subheader("📄 Hindi Caption")
+            st.write(caption_hi)
+
+            with st.spinner("🔊 Generating Hindi speech..."):
+                audio_hi = text_to_speech(caption_hi, lang='hi')
+                st.markdown(get_audio_html(audio_hi), unsafe_allow_html=True)
+
+    # Cleanup temp files
     if os.path.exists("temp_audio.mp3"):
         os.remove("temp_audio.mp3")
